@@ -256,6 +256,155 @@ Resultado:
 
 ## 5.- Configurar host virtuales
 
+1. El hosting compartido consiste en el mantenimiento de diferentes sitios web (independientes entre ellos) en el mismo servidor, compartiendo recursos.
+
+Por defecto ``apache2`` crea un sitio web en ``/var/www/html`` formado por un único archivo:
+``index.html``. Este sitio está configurado en ``/etc/apache2/sites-available/000-default.conf``. Puedes usar este archivo de configuración de plantilla para configurar otros sitios
+web.
+
+```bash
+ls /var/www/html
+cat /var/www/html/index.html
+```
+
+En una tarea anterior hemos creado un "**index.html**", podemos visualizarla.
+
+![Sitio web por defecto de "Apache"](./img/23_http.png)
+
+```bash
+cat /etc/apache2/sites-available/000-default.conf
+```
+
+Podemos ver el archivo de configuración para configurar otros sitios web:
+
+![Configuración de sitios web](./img/24_http.png)
+
+Para crear otro sitio web, por ejemplo: ``www.misitio.com``, debes crear una carpeta hermana a
+``html``, por ejemplo: ``/var/www/misitio.com``. Cada sitio web debe tener un archivo de configuración, siguiendo con el ejemplo anterior esta podría ser: ``/etc/apache2/sites-available/misitio.com.conf``. Puedes usar la plantilla ``/etc/apache2/sitesavailable/000-default.conf`` para no empezar desde cero. En nuestro ejemplo nuestro archivo
+de configuración podría contener la siguiente configuración:
+
+Vamos a crear una carpeta hermana a "**html**" de la siguiente manera:
+
+```bash
+ls /var/www
+cd /var/www
+sudo mkdir misitio.com
+ls
+```
+
+![Creo el sitio web](./img/25_http.png)
+
+```bash
+ls /etc/apache2/
+ls /etc/apache2/sites-available
+cd /etc/apache2/sites-available
+sudo touch misitio.com.conf
+ls
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/26_http.png)
+
+Ahora configuro el archivo de configuración:
+
+```bash
+nano misitio.com.conf
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/27_http.png)
+
+Si intentamos guardar nos va a salir este error de permisos:
+
+![Error de permisos](./img/28_http.png)
+
+> Recuerda que los ficheros servidos deben ser propiedad del usuario y grupo que usa Apache,
+es decir usuario ``www-data`` y grupo ``www-data``.
+
+Configura el host ``virtual misitio.com`` según la información anterior.
+
+Le concedo los permisos y guardo el archivo creado.
+
+```bash
+sudo chown -R www-data:www-data /var/www/misitio.com
+sudo nano misitio.com.conf
+```
+
+![Concedo permisos al archivo de configuración](./img/29_http.png)
+
+2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo
+utilizando el comando ``a2ensite`` **(apache2 enable site)**:
+
+```bash
+sudo a2ensite misitio.com.conf
+systemctl reload apache2
+```
+
+> Es lo mismo que hacer el enlace simbólico a mano:
+>
+> ```bash
+> sudo ln -s ../sites-avaiable/misitio.com.conf /etc/apache2/sitesenabled/misitio.com.conf
+> ```
+
+> Para desactivar el sitio web usaremos el comando ``a2dissite`` **(apache2 disable site)**.
+
+![Activar el archivo de configuración del nuevo host virtual](./img/30_http.png)
+
+Automáticamente se creará un enlace simbólico con la configuración del sitio web de ``sites-available`` en ``sites-enabled``:
+
+```bash
+cd ..
+ls sites-available
+ls sites-enabled
+```
+
+![Se crea el enlace de la configuración del sitio web](./img/31_http.png)
+
+3. Reiniciamos el servicio ``apache2``. Lo he reiniciado anteriormente, pero lo volveré a hacer por si acaso es necesario.
+
+```bash
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+![Reinicio el servicio "apache"](./img/32_http.png)
+
+4. Por simplicidad y para no tener que configurar un **servidor DNS** para indicarle a nuestro ordenador que el dominio ``misitio.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/33_http.png)
+
+Si queremos probar desde el equipo **Casa** deberemos editar dicho archivo en ese equipo pero
+indicándo la dirección IP de **Servidor**:
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/34_http.png)
+
+> En Windows este fichero se encuentra en: ``C:\Windows\System32\Drivers\etc\hosts``.
+
+En ambos casos podemos comprobar que resuelve el nombre con:
+
+```bash
+ping -c 3 misitio.com
+y
+ping -c 3 www.misitio.com
+```
+
+![Comprobar que funciona](./img/35_http.png)
+
+Y podemos ver la web con el navegador de línea de comandos con:
+
+```bash
+ping -c 3 misitio.com
+y
+ping -c 3 www.misitio.com
+```
+
+
 
 
 
