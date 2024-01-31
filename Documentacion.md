@@ -241,23 +241,20 @@ Resultado:
 1. Podemos comprobar los archivos de configuración de apache2 con el comando:
 
 ```bash
+sudo apt install links
 apache2ctl configtest
 apache2ctl status
 ```
+
+> Este comando muestra los resultados en un navegador de línea de comandos. Si no tienes ninguno instalado, instala el navegador ``links``.
 
 Resultado:
 
 ![Comprobar los archivos de configuración de "Apache"](./img/21_http.png)
 
-> Este comando muestra los resultados en un navegador de línea de comandos. Si no tienes ninguno instalado, instala el navegador ``links``.
-
-```bash
-sudo apt install links
-```
-
-Resultado:
-
 ![Comprobar los archivos de configuración de "Apache"](./img/22_http.png)
+
+## 5.- Configurar host virtuales
 
 
 
