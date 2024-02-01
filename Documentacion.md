@@ -373,7 +373,7 @@ sudo systemctl status apache2
 sudo nano /etc/hosts
 ```
 
-![Edito el archivo "/etc/hosts"](./img/33_http.png)
+![Edito el archivo "/etc/hosts"](./img/34_http.png)
 
 Si queremos probar desde el equipo **Casa** deberemos editar dicho archivo en ese equipo pero
 indicándo la dirección IP de **Servidor**:
@@ -382,7 +382,7 @@ indicándo la dirección IP de **Servidor**:
 sudo nano /etc/hosts
 ```
 
-![Edito el archivo "/etc/hosts"](./img/34_http.png)
+![Edito el archivo "/etc/hosts"](./img/33_http.png)
 
 > En Windows este fichero se encuentra en: ``C:\Windows\System32\Drivers\etc\hosts``.
 
@@ -399,11 +399,31 @@ ping -c 3 www.misitio.com
 Y podemos ver la web con el navegador de línea de comandos con:
 
 ```bash
-ping -c 3 misitio.com
+links http://misitio.com
 y
-ping -c 3 www.misitio.com
+links http://www.misitio.com
 ```
 
+![Comprobar que funciona](./img/36_http.png)
+
+![Comprobar que funciona](./img/37_http.png)
+
+> Letra ``q`` para salir.
+
+Desde el equipo Casa también podemos comprobar que en el navegador se pueden acceder a la web:
+``http://misitio.com`` y ``http://www.misitio.com``.
+
+He tenido un problema y he vuelto a hacer todo de nuevo, he creado de nuevo "**index.html**" dentro de "**/etc/www/misitio.com**":
+
+![Comprobar que funciona](./img/38_http.png)
+
+Resultado en el navegador:
+
+![Comprobar que funciona](./img/39_http.png)
+
+![Comprobar que funciona](./img/40_http.png)
+
+5. Los registros (logs) los ponemos ver desde el equipo **Servidor** con:
 
 
 
@@ -411,6 +431,29 @@ ping -c 3 www.misitio.com
 
 
 
+
+
+
+```bash
+tail /var/log/apache2/misitio.com-access.log
+y
+tail /var/log/apache2/misitio.com-error.log
+```
+
+Resultado:
+
+![Comprobar que funciona](./img/36_http.png)
+
+
+
+
+
+
+
+
+
+
+EN EL APARTADO 6 CREAR misitio2.com
 
 
 
