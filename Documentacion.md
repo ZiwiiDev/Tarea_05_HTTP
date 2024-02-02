@@ -259,8 +259,7 @@ Resultado:
 1. El hosting compartido consiste en el mantenimiento de diferentes sitios web (independientes entre ellos) en el mismo servidor, compartiendo recursos.
 
 Por defecto ``apache2`` crea un sitio web en ``/var/www/html`` formado por un único archivo:
-``index.html``. Este sitio está configurado en ``/etc/apache2/sites-available/000-default.conf``. Puedes usar este archivo de configuración de plantilla para configurar otros sitios
-web.
+``index.html``. Este sitio está configurado en ``/etc/apache2/sites-available/000-default.conf``. Puedes usar este archivo de configuración de plantilla para configurar otros sitios web.
 
 ```bash
 ls /var/www/html
@@ -307,17 +306,16 @@ ls
 Ahora configuro el archivo de configuración:
 
 ```bash
-nano misitio.com.conf
+sudo nano misitio.com.conf
 ```
 
 ![Configuro el archivo de configuración del sitio web que he creado](./img/27_http.png)
 
-Si intentamos guardar nos va a salir este error de permisos:
+Si intentamos guardar nos va a salir este error de permisos (esto me pasa por no poner el ``sudo``):
 
 ![Error de permisos](./img/28_http.png)
 
-> Recuerda que los ficheros servidos deben ser propiedad del usuario y grupo que usa Apache,
-es decir usuario ``www-data`` y grupo ``www-data``.
+> Recuerda que los ficheros servidos deben ser propiedad del usuario y grupo que usa Apache, es decir usuario ``www-data`` y grupo ``www-data``.
 
 Configura el host ``virtual misitio.com`` según la información anterior.
 
@@ -413,9 +411,7 @@ links http://www.misitio.com
 Desde el equipo Casa también podemos comprobar que en el navegador se pueden acceder a la web:
 ``http://misitio.com`` y ``http://www.misitio.com``.
 
-He tenido un problema y he vuelto a hacer todo de nuevo, he creado de nuevo "**index.html**" dentro de "**/etc/www/misitio.com**":
-
-![Comprobar que funciona](./img/38_http.png)
+He tenido un problema y he vuelto a hacer todo de nuevo, he creado de nuevo "**index.html**" dentro de "**/etc/www/misitio.com**" y he vuelto a configurar todo de nuevo.
 
 Resultado en el navegador:
 
@@ -423,16 +419,7 @@ Resultado en el navegador:
 
 ![Comprobar que funciona](./img/40_http.png)
 
-5. Los registros (logs) los ponemos ver desde el equipo **Servidor** con:
-
-
-
-
-
-
-
-
-
+5. Los registros (logs) los podemos ver desde el equipo **Servidor** con:
 
 ```bash
 tail /var/log/apache2/misitio.com-access.log
@@ -442,18 +429,284 @@ tail /var/log/apache2/misitio.com-error.log
 
 Resultado:
 
-![Comprobar que funciona](./img/36_http.png)
+![Muestro los registros "logs"](./img/41_http.png)
+
+No aparece nada en el log de errores porque no hay errores.
+
+También podemos comprobar las conexiones con el comando:
+
+```bash
+apache2ctl status
+```
+
+![Muestro los registros "logs"](./img/42_http.png)
+
+![Muestro los registros "logs"](./img/43_http.png)
+
+## 6.- Configurar autenticación básica (AuthType Basic)
+
+El problema de este sistema es que las contraseñas viajan en texto plano sin ningún tipo de encriptación.
+
+1. Esta autentificación básica utiliza el módulo de Apache: ``mod_auth_basic``. Normalmente este
+módulo viene activo. Si no fuese así lo podemos activar con:
+
+```bash
+apache2ctl -M
+sudo a2enmod auth_basic
+sudo systemctl restart apache2 
+```
+
+Resultado:
+
+![Activo el módulo "mod_auth_basic"](./img/44_http.png)
+
+![Activo el módulo "mod_auth_basic"](./img/45_http.png)
+
+2. Necesitamos tener instalada la utilidad ``htpasswd`` que está en el paquete ``apache2-utils``:
+
+```bash
+sudo apt install apache2-utils -y
+apt-cache show apache2-utils
+```
+
+Resultado:
+
+![Instalo "htpasswd"](./img/46_http.png)
+
+![Instalo "htpasswd"](./img/47_http.png)
+
+![Instalo "htpasswd"](./img/48_http.png)
+
+3. Creamos un archivo nuevo ``.htpasswd`` con un nuevo usuario usuario llamado **stetcu**:
+
+```bash
+sudo htpasswd -c /etc/apache2/.htpasswd stetcu
+```
+
+Le pongo de contraseña "stetcu":
+
+![Creo un nuevo archivo ".htpasswd" con un nuevo usuario llamado "stetcu"](./img/49_http.png)
+
+> Hemos llamado al archivo de contraseñas ``.htpasswd`` pero se podría haber llamado, por
+> ejemplo: ``passwd.txt``. Pr seguridad el archivo no debería estar en la carpeta de publicación
+> de Apache.
+
+Creamos un segundo usuario sobre el archivo ``.htpasswd`` ya existente:
+
+```bash
+sudo htpasswd /etc/apache2/.htpasswd oliver
+```
+
+Resultado:
+
+![Creo otro usuario sobre el archivo ".htpasswd" existente](./img/50_http.png)
+
+> Si el archivo ``.htpasswd`` ya está creado debemos quitar el ``-c``.
+
+Podemos ver el contenido del fichero recién creado. Las contraseñas estarán cifradas:
+
+```bash
+sudo cat /etc/apache2/.htpasswd
+```
+
+Resultado:
+
+![Muestro el contenido del fichero recién creado, las contraseñas](./img/51_http.png)
+
+Asignamos la propiedad del fichero y el grupo al usuario y grupo sobre el que se ejecuta Apache
+``www-data``.
+
+```bash
+sudo chown www-data:www-data /etc/apache2/.htpasswd
+```
+
+Resultado:
+
+![Asigno la propiedad del fichero y el grupo al usuario y grupo sobre el que se ejecuta "Apache"](./img/52_http.png)
+
+4. Creamos un nuevo sitio web ``misitio2.com`` con el siguiente archivo de configuración.
+Restringiremos el acceso a la carpeta ``usuarios`` del sitio web. Esto se indicará en la configuración de la directiva ``Directory``.
+
+> Revisa los pasos que vimos en el apartado **Configurar host virtuales** para crear este nuevo sitio web.
+
+> Recuerda crear la nueva carpeta ``usuarios`` en el lugar y con los permisos adecuados.
+
+> Recuerda que puedes comprobar los archivos de configuración con ``apache2ctl configtest``:
+
+Vamos a crear una carpeta hermana a "**html**" y "**misitio.com**" de la siguiente manera:
+
+```bash
+ls /var/www
+cd /var/www
+sudo mkdir misitio2.com
+ls
+```
+
+![Creo el sitio web](./img/53_http.png)
+
+Creo el archivo "**index.html**" dentro de "**/etc/var/www/misitio2.com**", luego también creo la carpeta "**usuarios**" y creo mi web:
+
+![Creo el "index.html" y "usuarios"](./img/63_http.png)
+
+![Creo el "index.html" y "usuarios"](./img/64_http.png)
+
+Creo el archivo de configuración del sitio web 2:
+
+```bash
+ls /etc/apache2/
+ls /etc/apache2/sites-available
+cd /etc/apache2/sites-available
+sudo touch misitio2.com.conf
+ls
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/54_http.png)
+
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/55_http.png)
+
+Ahora configuro el archivo de configuración:
+
+```bash
+sudo nano misitio2.com.conf
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/56_http.png)
+
+Restringiremos el acceso a la carpeta usuarios del sitio web. Esto se indicará en la configuración de la directiva ``Directory``.
+
+Configuro el host ``virtual misitio2.com`` según la información anterior.
+
+Le concedo los permisos y guardo el archivo creado.
+
+```bash
+sudo chown -R www-data:www-data /var/www/misitio2.com
+sudo nano misitio2.com.conf
+```
+
+![Concedo permisos al archivo de configuración](./img/57_http.png)
+
+2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo
+utilizando el comando ``a2ensite`` **(apache2 enable site)**:
+
+```bash
+sudo a2ensite misitio2.com.conf
+systemctl reload apache2
+```
+
+![Activar el archivo de configuración del nuevo host virtual](./img/58_http.png)
+
+![Activar el archivo de configuración del nuevo host virtual](./img/65_http.png)
+
+Automáticamente se creará un enlace simbólico con la configuración del sitio web de ``sites-available`` en ``sites-enabled``:
+
+```bash
+cd ..
+ls sites-available
+ls sites-enabled
+```
+
+Resultado:
+
+![Se crea el enlace de la configuración del sitio web](./img/59_http.png)
+
+3. Reiniciamos el servicio ``apache2``. Lo he reiniciado anteriormente, pero lo volveré a hacer por si acaso es necesario.
+
+```bash
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+![Reinicio el servicio "apache"](./img/60_http.png)
+
+4. Por simplicidad y para no tener que configurar un **servidor DNS** para indicarle a nuestro ordenador que el dominio ``misitio2.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
+
+> Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras > comprobar el acceso al sitio web.
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/61_http.png)
+
+Si queremos probar desde el equipo **Casa** deberemos editar dicho archivo en ese equipo pero
+indicándo la dirección IP de **Servidor**:
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/66_http.png)
+
+Compruebo los archivos de configuración con ``apache2ctl configtest``.
+
+![Comprobar los archivos de configuración de "Apache"](./img/76_http.png)
+
+En ambos casos podemos comprobar que resuelve el nombre con:
+
+```bash
+ping -c 3 misitio2.com
+y
+ping -c 3 www.misitio2.com
+```
+
+![Comprobar que funciona](./img/67_http.png)
+
+Y podemos ver la web con el navegador de línea de comandos con:
+
+```bash
+links http://misitio2.com
+y
+links http://www.misitio2.com
+```
+
+![Comprobar que funciona](./img/68_http.png)
+
+![Comprobar que funciona](./img/69_http.png)
+
+> Letra ``q`` para salir.
+
+Desde el equipo Casa también podemos comprobar que en el navegador se pueden acceder a la web:
+``http://misitio2.com`` y ``http://www.misitio2.com``.
+
+Resultado en el navegador:
+
+![Comprobar que funciona](./img/70_http.png)
+
+![Comprobar que funciona](./img/71_http.png)
+
+5. Los registros (logs) los podemos ver desde el equipo **Servidor** con:
+
+```bash
+tail /var/log/apache2/misitio2.com-access.log
+y
+tail /var/log/apache2/misitio2.com-error.log
+```
+
+Resultado:
+
+![Muestro los registros "logs"](./img/72_http.png)
+
+![Muestro los registros "logs"](./img/73_http.png)
+
+No aparece nada en el log de errores porque no hay errores.
+
+6. Ahora podemos probar el sitio web tanto por terminal en **Servidor** y **Casa** como con el navegador desde Casa. Primero podemos acceder a la dirección ``http://misitio2.com`` y comprobar que la web funciona con normalidad. Después podemos acceder a ``http://misitio2.com/usuarios`` y
+comprobar como aparece una ventana solicitando que nos identificamos mediante un usuario y una
+contraseña.
+
+![Pruebo a entrar a la URL de "http://misitio2.com/usuarios"](./img/74_http.png)
+
+Si inicio sesión con el usuario "**oliver**" aparece lo siguiente:
+
+![Inicio sesión con "oliver"](./img/75_http.png)
+
+## 7.- Configurar autenticación Digest (AuthType Digest)
+
+Para solucionar el problema de que las contraseñas viajen en texto plano se puede utilizar un mecanismo hash para el envío de estas.
 
 
 
-
-
-
-
-
-
-
-EN EL APARTADO 6 CREAR misitio2.com
 
 
 
