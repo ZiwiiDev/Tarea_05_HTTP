@@ -619,6 +619,19 @@ sudo systemctl status apache2
 
 ![Reinicio el servicio "apache"](./img/60_http.png)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 4. Por simplicidad y para no tener que configurar un **servidor DNS** para indicarle a nuestro ordenador que el dominio ``misitio2.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
 
 > Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras > comprobar el acceso al sitio web.
@@ -705,9 +718,121 @@ Si inicio sesión con el usuario "**oliver**" aparece lo siguiente:
 
 Para solucionar el problema de que las contraseñas viajen en texto plano se puede utilizar un mecanismo hash para el envío de estas.
 
+1. Esta autentificación digest utiliza el módulo de Apache: ``mod_auth_digest``. Normalmente este
+módulo viene activo. Si no fuese así lo podemos activar con:
+
+```bash
+apache2ctl -M
+sudo a2enmod auth_digest
+sudo systemctl restart apache2
+apache2ctl -M
+```
+
+Resultado:
+
+![Compruebo si está el módulo de Apache Digest activo](./img/77_http.png)
+
+Como podemos comprobar no lo tenemos activo, vamos a activarlo de la siguiente manera:
+
+![Compruebo si está el módulo de Apache Digest activo](./img/78_http.png)
+
+Ya lo tenemos activo:
+
+![Compruebo si está el módulo de Apache Digest activo](./img/79_http.png)
+
+2. Creamos un nuevo sitio web ``misitio3.com`` semejante a los anteriores. En este ejemplo
+restringiremos el acceso a la carpeta ``privado`` del sitio web:
+
+Vamos a crear una carpeta hermana a "**html**" y "**misitio3.com**" de la siguiente manera:
+
+```bash
+ls /var/www
+cd /var/www
+sudo mkdir misitio3.com
+ls
+```
+
+![Creo el sitio web](./img/80_http.png)
+
+Creo el archivo "**index.html**" dentro de "**/etc/var/www/misitio2.com**" y creo mi web:
+
+![Creo el "index.html"](./img/81_http.png)
+
+![Creo el "index.html"](./img/82_http.png)
+
+Creo el archivo de configuración del sitio web 3:
+
+```bash
+ls /etc/apache2/
+ls /etc/apache2/sites-available
+cd /etc/apache2/sites-available
+sudo touch misitio3.com.conf
+ls
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/83_http.png)
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/84_http.png)
+
+Ahora configuro el archivo de configuración:
+
+```bash
+sudo nano misitio3.com.conf
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/85_http.png)
+
+Restringiremos el acceso a la carpeta privado del sitio web. Esto se indicará en la configuración de la directiva ``Directory``.
+
+Configuro el host ``virtual misitio3.com`` según la información anterior.
+
+Le concedo los permisos y guardo el archivo creado.
+
+```bash
+sudo chown -R www-data:www-data /var/www/misitio3.com
+sudo nano misitio3.com.conf
+```
+
+![Concedo permisos al archivo de configuración](./img/86_http.png)
+
+2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo
+utilizando el comando ``a2ensite`` **(apache2 enable site)**:
+
+```bash
+sudo a2ensite misitio3.com.conf
+sudo systemctl reload apache2
+```
+
+![Activar el archivo de configuración del nuevo host virtual](./img/87_http.png)
+
+Automáticamente se creará un enlace simbólico con la configuración del sitio web de ``sites-available`` en ``sites-enabled``:
+
+```bash
+cd 
+ls sites-available
+ls sites-enabled
+```
+
+Resultado:
+
+![Se crea el enlace de la configuración del sitio web](./img/88_http.png)
 
 
 
+
+
+
+
+
+
+3. Reiniciamos el servicio ``apache2``. Lo he reiniciado anteriormente, pero lo volveré a hacer por si acaso es necesario.
+
+```bash
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+![Reinicio el servicio "apache"](./img/60_http.png)
 
 
 
