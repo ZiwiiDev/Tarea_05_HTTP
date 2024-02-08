@@ -619,22 +619,9 @@ sudo systemctl status apache2
 
 ![Reinicio el servicio "apache"](./img/60_http.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 4. Por simplicidad y para no tener que configurar un **servidor DNS** para indicarle a nuestro ordenador que el dominio ``misitio2.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
 
-> Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras > comprobar el acceso al sitio web.
+> Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras comprobar el acceso al sitio web.
 
 ```bash
 sudo nano /etc/hosts
@@ -782,6 +769,42 @@ sudo nano misitio3.com.conf
 
 ![Configuro el archivo de configuración del sitio web que he creado](./img/85_http.png)
 
+> En este tipo de autenticación se utiliza el valor de la directiva ``AuthName`` como nombre de
+> dominio ``realm`` para generar el usuario y la contraseña.
+
+3. Para crear los usuarios usaremos la herramienta ``htdigest``:
+
+```bash
+sudo htdigest -c /etc/apache2/.htdigest despliegue oliver
+```
+
+![Creo los usuarios usando la herramienta "htdigest"](./img/90_http.png)
+
+> Hemos llamado al archivo de contraseñas .htdigest pero se podría haber llamado, por
+> ejemplo: passwd.txt. Pr seguridad el archivo no debería estar en la carpeta de publicación
+> de Apache.
+
+Podemos ver el contenido del fichero recién creado. En este caso los usuario y las contraseñas
+estarán cifradas:
+
+```bash
+sudo cat /etc/apache2/.htdigest
+```
+
+![Muestro el archivo creado, usuario y contraseñas cifradas](./img/91_http.png)
+
+4. Asignamos la propiedad del fichero y el grupo al usuario y grupo sobre el que se ejecuta Apache ``www-data``.
+
+```bash
+sudo chown www-data:www-data /etc/apache2/.htdigest
+```
+
+![Muestro el archivo creado, usuario y contraseñas cifradas](./img/92_http.png)
+
+> Hemos llamado al archivo de contraseñas ``.htdigest`` pero se podría haber llamado, por
+> ejemplo: ``passwd.txt``. Pr seguridad el archivo no debería estar en la carpeta de publicación
+> de Apache.
+
 Restringiremos el acceso a la carpeta privado del sitio web. Esto se indicará en la configuración de la directiva ``Directory``.
 
 Configuro el host ``virtual misitio3.com`` según la información anterior.
@@ -817,14 +840,6 @@ Resultado:
 
 ![Se crea el enlace de la configuración del sitio web](./img/88_http.png)
 
-
-
-
-
-
-
-
-
 3. Reiniciamos el servicio ``apache2``. Lo he reiniciado anteriormente, pero lo volveré a hacer por si acaso es necesario.
 
 ```bash
@@ -832,7 +847,137 @@ sudo systemctl restart apache2
 sudo systemctl status apache2
 ```
 
-![Reinicio el servicio "apache"](./img/60_http.png)
+![Reinicio el servicio "apache"](./img/89_http.png)
+
+4. Por simplicidad y para no tener que configurar un **servidor DNS** para indicarle a nuestro ordenador que el dominio ``misitio3.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
+
+> Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras comprobar el acceso al sitio web.
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/93_http.png)
+
+Si queremos probar desde el equipo **Casa** deberemos editar dicho archivo en ese equipo pero
+indicándo la dirección IP de **Servidor**:
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/94_http.png)
+
+Compruebo los archivos de configuración con ``apache2ctl configtest``.
+
+![Comprobar los archivos de configuración de "Apache"](./img/95_http.png)
+
+En ambos casos podemos comprobar que resuelve el nombre con:
+
+```bash
+ping -c 3 misitio3.com
+y
+ping -c 3 www.misitio3.com
+```
+
+![Comprobar que funciona](./img/96_http.png)
+
+Y podemos ver la web con el navegador de línea de comandos con:
+
+```bash
+links http://misitio3.com
+y
+links http://www.misitio3.com
+```
+
+![Comprobar que funciona](./img/97_http.png)
+
+![Comprobar que funciona](./img/98_http.png)
+
+> Letra ``q`` para salir.
+
+Desde el equipo Casa también podemos comprobar que en el navegador se pueden acceder a la web:
+``http://misitio3.com`` y ``http://www.misitio3.com``.
+
+Resultado en el navegador:
+
+![Comprobar que funciona](./img/99_http.png)
+
+![Comprobar que funciona](./img/100_http.png)
+
+5. Los registros (logs) los podemos ver desde el equipo **Servidor** con:
+
+```bash
+tail /var/log/apache2/misitio3.com-access.log
+y
+tail /var/log/apache2/misitio3.com-error.log
+```
+
+Resultado:
+
+![Muestro los registros "logs"](./img/101_http.png)
+
+No aparece nada en el log de errores porque no hay errores.
+
+6. Ahora podemos probar el sitio web tanto por terminal en **Servidor** y **Casa** como con el navegador desde **Casa**. Primero podemos acceder a la dirección ``http://misitio3.com`` y comprobar que la web funciona con normalidad. Después podemos acceder a ``http://misitio3.com/privado`` y comprobar como aparece una ventana solicitando que nos identificamos mediante un usuario y una contraseña.
+
+![Pruebo a entrar a la URL de "http://misitio3.com/privado"](./img/102_http.png)
+
+## 8.- Configurar SSL/TLS (HTTPS)
+
+SSL (Secure Socket Layer) es un protocolo de seguridad que nació con el objetivo de cifrar las
+comunicaciones entre los servidores web y los navegadores de forma que, si se interceptaba la conexión, nunca se pudiera desvelar el contenido de la misma. Con el paso del tiempo se han ido encontrando diversas vulnerabilidades críticas que han hecho que la recomendación sea user un nuevo protocolo llamado TLS (Transport Secure Layer).
+
+El primer paso para configurar SSL en Apache será crear el certificado y la clave, que se quedarán almacenados en /etc/apache2/certs. Para eso primero creamos la carpeta y luego el certificado y su correspondiente clave.
+
+Hay que tener en cuenta que estamos creando un certificado autofirmado. Este tipo de certificados sólo se deben usar con el propósito de enseñar o hacer una demostración puesto que en la práctica no son válidos. El navegador no confiará en él porque somos nosotros quienes lo hemos firmado. Los certificados, para que sean válidos, deben ser validados por una entidad certificadora. Más adelante veremos como el navegador avisa al usuario de que el certificado no es fiable (aunque siempre le mostrará la opción de continuar a pesar de ello)
+
+1. Creamos el certificado y guardamos la clave privada ``misitio4.key`` y la clave pública
+``misitio4.crt``: En la ubicación por defecto de SSL:
+
+```bash
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+-keyout /etc/ssl/private/misitio4.key \
+-out /etc/ssl/certs/misitio4.crt
+```
+
+Resultado:
+
+![Creo el certificado y guardo la clave privado "misitio4.key" y la clave pública "misitio4.crt"](./img/103_http.png)
+
+O en una carpeta dentro de la configuración de Apache.
+
+```bash
+sudo mkdir /etc/apache2/certs
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+-keyout /etc/apache2/certs/misitio4.key \
+-out /etc/apache2/certs/misitio4.crt
+```
+
+> Contestaremos a las preguntas que nos vayan haciendo por terminal con:
+
+* Country Name (2 letter code) [AU]: ES
+* State or Province Name (full name) [Some-State]: Almeria
+* Locality Name (eg, city) []: Aguadulce
+* Organization Name (eg, company) [Internet Widgits Pty Ltd]* : IES Aguadulce
+* Organizational Unit Name (eg, section) []: LMSGI
+* Common Name (e.g. server FQDN or YOUR name) []: misitio4.com
+* Email Address []: stetcu@misitio4.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
