@@ -1186,7 +1186,7 @@ tail /var/log/apache2/misitio4.com-error.log
 
 Resultado:
 
-![Muestro los registros "logs"](./img/131_http.png)
+![Muestro los registros "tail"](./img/131_http.png)
 
 2. Redirección de tráfico no seguro HTTP a HTTPS.
 
@@ -1194,8 +1194,82 @@ Nos puede interesar que todo el tráfico del sitio web se vea forzado a utilizar
 
 En este caso solo hace falta añadir la conexión HTTP del puerto 80 a nuestro archivo de configuración ``/etc/apache2/sites-available/misitio4.com.conf``. Podemos configurar el host virtual no seguro (``<VirtualHost *:80>``) con las opciones mínimas para redirigirlo al seguro. No haría falta ni incluir la opción ``DocumentRoot``.
 
+```bash
+sudo nano /etc/apache2/sites-available/misitio4.com.conf
+```
 
-PÁGINA 17 DEL PDF
+Resultado:
+
+![Configurar y añadir el puerto 80](./img/132_http.png)
+
+> Si queremos podemos optar por una redirección permanente (de esta forma así se notificará a
+> los buscadores) modificando la orden ``Redirect`` por la siguiente:
+>
+> ```bash
+> Redirect permanent / https://misitio4.com/
+> ```
+
+Resultado:
+
+![Configurar y añadir el puerto 80 permanente](./img/133_http.png)
+
+3. Reiniciar apache y comprobar el redireccionamiento de ``http://misitio4.com`` y
+``http://www.misitio4.com``.
+
+```bash
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+![Reinicio el servicio "apache"](./img/134_http.png)
+
+En ambos casos podemos comprobar que resuelve el nombre con:
+
+```bash
+ping -c 3 misitio4.com
+y
+ping -c 3 www.misitio4.com
+```
+
+![Comprobar que funciona](./img/135_http.png)
+
+## 9.- Configurar autenticación distribuida (.htaccess)
+
+Este método nos permite definir diferentes directivas de configuración para cada directorio (con sus respectivos subdirectorios) sin necesidad de editar los archivos de configuración del directorio ``/etc/apache2/sites-available`` de Apache.
+
+Para ello crearemos un fichero ``.htaccess`` que guardaremos en la carpeta del sitio que queremos proteger y que contendrá la configuración específica de ese directorio la que antes indicabamos en la directiva ``Directory`` del archivo de configuración ``*.conf``.
+
+Para permitir el uso de los ficheros ``.htaccess`` y/o restringir las directivas que se pueden aplicar usamos la directiva ``AllowOverride``. Esta directiva puede tomar uno o varios de los siguientes valores:
+
+* ``All``: Se pueden usar todas las directivas permitidas.
+* ``None``: Se ignoran los ficheros ``.htaccess``. Valor por defecto.
+* ``AuthConfig``: Directivas de autentificación y autorización: AuthName, AuthType, AuthUserFile Require, …
+* ``FileInfo``: Directivas relacionadas con el mapeo de URL: redirecciones, módulo rewrite, …
+* ``Indexes``: Directiva que controlan la visualización de listado de ficheros.
+
+1. Lo primero que tenemos que hacer es comprobar el estado de la directiva ``AllowOverride`` del archivo de configuración general ``/etc/apache2/apache2.conf`` para el directorio dónde se
+publican los sitios web ``/var/www``.
+
+Cambiaremos el valor a ``AllowOverride All`` para permitir dichas modificaciones. Así, la política sobre dicho directorio podrá ser diferente a la establecida en la carpeta si asi se define con algún fichero ``.htaccess``.
+
+```bash
+sudo nano /etc/apache2/apache2.conf
+```
+
+![Compruebo el estado de "AllowOverride" y le cambio el valor](./img/136_http.png)
+
+2. Por ejemplo en nuestro primer sitio web ``misitio.com`` podemos crear un nuevo directorio
+``confidencial``:
+
+```bash
+ls /var/www/
+ls /var/www/misitio.com
+cd /var/www/misitio.com
+sudo mkdir confidencial
+ls
+```
+
+![Creo el directorio "confidencial" y aplico la autentificación Digest](./img/137_http.png)
 
 
 
@@ -1204,13 +1278,17 @@ PÁGINA 17 DEL PDF
 
 
 
+Aplico la autentificación Digest con el archivo de usuarios que creamos en el **apartado Configurar autenticación Digest (AuthType Digest)**. El archivo de configución
+``.htaccess`` para esta configuración podría ser el siguiente:
 
+```bash
+AuthType Digest
+AuthName "despliegue"
+AuthUserFile /etc/apache2/.htdigest
+Require valid-user
+```
 
-
-
-
-
-
+![Creo el directorio "confidencial" y aplico la autentificación Digest](./img/138_http.png)
 
 
 
