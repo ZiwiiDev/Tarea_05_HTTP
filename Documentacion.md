@@ -443,6 +443,8 @@ apache2ctl status
 
 ![Muestro los registros "logs"](./img/43_http.png)
 
+LOS ARCHIVOS DE CONFIGURACIÓN Y LAS CARPETAS CREADAS, ASÍ COMO LOS INDEX.HTML LOS HE REALIZADO CON EL COMANDO ``sudo cp -r *de donde lo cojo* *a donde lo copio*``
+
 ## 6.- Configurar autenticación básica (AuthType Basic)
 
 El problema de este sistema es que las contraseñas viajan en texto plano sin ningún tipo de encriptación.
@@ -701,12 +703,13 @@ Si inicio sesión con el usuario "**oliver**" aparece lo siguiente:
 
 ![Inicio sesión con "oliver"](./img/75_http.png)
 
+LOS ARCHIVOS DE CONFIGURACIÓN Y LAS CARPETAS CREADAS, ASÍ COMO LOS INDEX.HTML LOS HE REALIZADO CON EL COMANDO ``sudo cp -r *de donde lo cojo* *a donde lo copio*``
+
 ## 7.- Configurar autenticación Digest (AuthType Digest)
 
 Para solucionar el problema de que las contraseñas viajen en texto plano se puede utilizar un mecanismo hash para el envío de estas.
 
-1. Esta autentificación digest utiliza el módulo de Apache: ``mod_auth_digest``. Normalmente este
-módulo viene activo. Si no fuese así lo podemos activar con:
+1. Esta autentificación digest utiliza el módulo de Apache: ``mod_auth_digest``. Normalmente este módulo viene activo. Si no fuese así lo podemos activar con:
 
 ```bash
 apache2ctl -M
@@ -741,7 +744,7 @@ ls
 
 ![Creo el sitio web](./img/80_http.png)
 
-Creo el archivo "**index.html**" dentro de "**/etc/var/www/misitio2.com**" y creo mi web:
+Creo el archivo "**index.html**" dentro de "**/var/www/misitio3.com**" y creo mi web:
 
 ![Creo el "index.html"](./img/81_http.png)
 
@@ -818,8 +821,7 @@ sudo nano misitio3.com.conf
 
 ![Concedo permisos al archivo de configuración](./img/86_http.png)
 
-2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo
-utilizando el comando ``a2ensite`` **(apache2 enable site)**:
+2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo utilizando el comando ``a2ensite`` **(apache2 enable site)**:
 
 ```bash
 sudo a2ensite misitio3.com.conf
@@ -831,7 +833,7 @@ sudo systemctl reload apache2
 Automáticamente se creará un enlace simbólico con la configuración del sitio web de ``sites-available`` en ``sites-enabled``:
 
 ```bash
-cd 
+cd ..
 ls sites-available
 ls sites-enabled
 ```
@@ -923,6 +925,8 @@ No aparece nada en el log de errores porque no hay errores.
 
 ![Pruebo a entrar a la URL de "http://misitio3.com/privado"](./img/102_http.png)
 
+LOS ARCHIVOS DE CONFIGURACIÓN Y LAS CARPETAS CREADAS, ASÍ COMO LOS INDEX.HTML LOS HE REALIZADO CON EL COMANDO ``sudo cp -r *de donde lo cojo* *a donde lo copio*``
+
 ## 8.- Configurar SSL/TLS (HTTPS)
 
 SSL (Secure Socket Layer) es un protocolo de seguridad que nació con el objetivo de cifrar las
@@ -963,6 +967,243 @@ sudo openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
 * Organizational Unit Name (eg, section) []: LMSGI
 * Common Name (e.g. server FQDN or YOUR name) []: misitio4.com
 * Email Address []: stetcu@misitio4.com
+
+Resultado:
+
+![Creo el certificado y guardo la clave privado "misitio4.key" y la clave pública "misitio4.crt"](./img/104_http.png)
+
+2. Activamos el módulo SSL:
+
+```bash
+sudo a2enmod ssl
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+Resultado:
+
+![Activo el módulo SSL](./img/105_http.png)
+
+3. Comprobamos que el puerto de HTTPS (443) está configurado en el archivo ``/etc/apache2/ports.conf``.
+
+> Suele estar dentro de una condicional ``IfModule``.
+
+```bash
+sudo cat /etc/apache2/ports.conf
+```
+
+Resultado:
+
+![Compruebo que el puerto 443 está configurado](./img/107_http.png)
+
+4. Añadimos la regla al firewall.
+
+```bash
+sudo ufw app list
+sudo ufw allow "Apache Secure"
+sudo ufw allow 443/tcp
+```
+
+Resultado:
+
+![Añado la regla al firewall](./img/106_http.png)
+
+5. Creamos y configuramos un nuevo sitio web ``misitio4.com`` con soporte de conexión segura SSL. Creamos la carpeta y el ``index.html`` correspondiente. 
+
+Primero creo un nuevo sitio web ``misitio4.com`` semejante a los anteriores.
+
+Vamos a crear una carpeta hermana a "**html**" y "**misitio4.com**" de la siguiente manera:
+
+```bash
+ls /var/www
+cd /var/www
+sudo mkdir misitio4.com
+ls
+```
+
+![Creo el sitio web](./img/108_http.png)
+
+Creo el archivo "**index.html**" dentro de "**/var/www/misitio4.com**" y creo mi web:
+
+![Creo el "index.html"](./img/110_http.png)
+
+![Creo el "index.html"](./img/109_http.png)
+
+Hacemos una copia de la plantilla ``/etc/apache2/sites-availables/default-ssl.conf`` y la configuramos. Creo el archivo de configuración del sitio web 4:
+s
+```bash
+sudo cp /etc/apache2/sites-available/default-ssl.conf
+/etc/apache2/sites-available/misitio4.com.conf
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/111_http.png)
+
+Ahora configuro el archivo de configuración:
+
+```bash
+sudo nano misitio4.com.conf
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/112_http.png)
+
+También se puede hacer con la ruta a la carpeta de configuración de Apache de esta manera (no lo hago porque lo hice de la otra forma):
+
+```bash
+SSLCertificateFile /etc/apache2/certs/misitio4.crt
+SSLCertificateKeyFile /etc/apache2/certs/misitio4.key
+```
+
+6. Activar el sitio y reiniciar apache.
+
+Le concedo los permisos y guardo el archivo creado.
+
+```bash
+sudo chown -R www-data:www-data /var/www/misitio4.com
+sudo nano misitio4.com.conf
+```
+
+![Concedo permisos al archivo de configuración](./img/113_http.png)
+
+2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo utilizando el comando ``a2ensite`` **(apache2 enable site)**:
+
+```bash
+sudo a2ensite misitio4.com.conf
+sudo systemctl reload apache2
+sudo systemctl status apache2
+```
+
+![Activar el archivo de configuración del nuevo host virtual](./img/114_http.png)
+
+Automáticamente se creará un enlace simbólico con la configuración del sitio web de ``sites-available`` en ``sites-enabled``:
+
+```bash
+cd ..
+ls sites-available
+ls sites-enabled
+```
+
+Resultado:
+
+![Se crea el enlace de la configuración del sitio web](./img/115_http.png)
+
+3. Reiniciamos el servicio ``apache2``. Lo he reiniciado anteriormente, pero lo volveré a hacer por si acaso es necesario.
+
+```bash
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+![Reinicio el servicio "apache"](./img/116_http.png)
+
+Por simplicidad y para no tener que configurar un **Servidor DNS** para indicarle a nuestro ordenador que el dominio ``misitio4.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
+
+> Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras comprobar el acceso al sitio web.
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/117_http.png)
+
+Si queremos probar desde el equipo **Casa** deberemos editar dicho archivo en ese equipo pero
+indicándo la dirección IP de **Servidor**:
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/118_http.png)
+
+Compruebo los archivos de configuración con ``apache2ctl configtest``.
+
+![Comprobar los archivos de configuración de "Apache"](./img/95_http.png)
+
+En ambos casos podemos comprobar que resuelve el nombre con:
+
+```bash
+ping -c 3 misitio4.com
+y
+ping -c 3 www.misitio4.com
+```
+
+![Comprobar que funciona](./img/119_http.png)
+
+7. Comprobar la conexión HTTPS desde **Servidor** con el navegador ``links`` y desde **Casa** con el navegador Firefox. Como el certificado es autofirmado el navagador nos deberá avisar de que la conexión no es segura ya que no puede comprobar nuestro certificado en una Autoridad
+Certificadora (CA). Para acceder debemos aceptar el certificado. En ``links`` solo debes contestar a la pregunta. En firefox pulsaremos sobre **Avanzado** y después **Aceptar el riesgo y continuar**.
+
+Y podemos ver la web con el navegador de línea de comandos con:
+
+```bash
+links https://misitio4.com
+y
+links https://www.misitio4.com
+```
+
+![Comprobar que funciona](./img/120_http.png)
+
+![Comprobar que funciona](./img/121_http.png)
+
+Y lo mismo aparece con el ``links`` de  el ``www.misitio4.com``.
+
+Y en el navegador aparecerá lo siguiente:
+
+![Comprobar que funciona](./img/122_http.png)
+
+![Comprobar que funciona](./img/123_http.png)
+
+En firefox pulsaremos sobre **Avanzado** y después **Aceptar el riesgo y continuar**.
+
+![Comprobar que funciona](./img/124_http.png)
+
+![Comprobar que funciona](./img/125_http.png)
+
+![Comprobar que funciona](./img/126_http.png)
+
+Ya podemos acceder a la web. Para ver el cerfificado pulsaremos sobre el **icono del candado** de la barra de direcciones, **Conexión no segura y Más información**.
+
+![Comprobar que funciona](./img/127_http.png)
+
+![Comprobar que funciona](./img/128_http.png)
+
+Pulsamos sobre **ver certificado**.
+
+![Comprobar que funciona](./img/129_http.png)
+
+1. Comprobar el tráfico no seguro HTTP del sitio web ``misitio4.com``.
+
+Si probamos a acceder a ``http://misitio4.com`` sin la s veremos que accedemos al sitio web por
+defecto ``000-default.conf`` ya que no hemos configurado nada en este sitio web para el puerto 80 de HTTP.
+
+![Comprobar que funciona](./img/130_http.png)
+
+Los registros (logs) los podemos ver desde el equipo **Servidor** con:
+
+```bash
+tail /var/log/apache2/misitio4.com-access.log
+y
+tail /var/log/apache2/misitio4.com-error.log
+```
+
+Resultado:
+
+![Muestro los registros "logs"](./img/131_http.png)
+
+2. Redirección de tráfico no seguro HTTP a HTTPS.
+
+Nos puede interesar que todo el tráfico del sitio web se vea forzado a utilizar el protocolo seguro HTTPS. Incluso aunque el usuario introduzca la URL directamente y decide navegar utilizando HTTP (http://...) nosotros podemos redirigirle hacia la opción de utilizar la opción segura.
+
+En este caso solo hace falta añadir la conexión HTTP del puerto 80 a nuestro archivo de configuración ``/etc/apache2/sites-available/misitio4.com.conf``. Podemos configurar el host virtual no seguro (``<VirtualHost *:80>``) con las opciones mínimas para redirigirlo al seguro. No haría falta ni incluir la opción ``DocumentRoot``.
+
+
+PÁGINA 17 DEL PDF
+
+
+
+
+
+
+
+
 
 
 
