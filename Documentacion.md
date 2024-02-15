@@ -1271,14 +1271,7 @@ ls
 
 ![Creo el directorio "confidencial" y aplico la autentificación Digest](./img/137_http.png)
 
-
-
-
-
-
-
-
-Aplico la autentificación Digest con el archivo de usuarios que creamos en el **apartado Configurar autenticación Digest (AuthType Digest)**. El archivo de configución
+Aplico la autentificación Digest con el archivo de usuarios que creamos en el apartado **Configurar autenticación Digest (AuthType Digest)**. El archivo de configuración
 ``.htaccess`` para esta configuración podría ser el siguiente:
 
 ```bash
@@ -1288,14 +1281,68 @@ AuthUserFile /etc/apache2/.htdigest
 Require valid-user
 ```
 
+Comandos:
+
+```bash
+cd /var/www/misitio.com/confidencial
+sudo touch .htaccess
+sudo nano .htaccess
+```
+
+Resultado:
+
 ![Creo el directorio "confidencial" y aplico la autentificación Digest](./img/138_http.png)
 
+Ahora configuro el archivo de configuración:
+
+![Creo el directorio "confidencial" y aplico la autentificación Digest](./img/139_http.png)
+
+3. Ahora podemos probar el sitio web tanto por terminal en **Servidor** y **Casa** como con el navegador desde **Casa**. Primero podemos acceder a la dirección ``http://misitio.com`` y comprobar que la web funciona con normalidad. Después podemos acceder a ``http://misitio.com/confidencial`` y comprobar como aparece una ventana solicitando que nos identificamos mediante un usuario y una contraseña.
+
+![Concedo permisos al archivo de configuración](./img/140_http.png)
+
+![Concedo permisos al archivo de configuración](./img/141_http.png)
+
+![Concedo permisos al archivo de configuración](./img/142_http.png)
+
+Pruebo el sitio web en **Servidor**:
+
+```bash
+ping -c 3 misitio.com
+y
+ping -c 3 www.misitio.com
+```
+
+![Comprobar que funciona](./img/143_http.png)
 
 
 
 
 
 
+
+
+
+4. También podemos impedir, por ejemplo, que los ficheros de un directorio puedan ser listados por cualquier visitante. Basta con crear un fichero ``.htaccess`` y añadir la siguiente directiva que indica que no puede listarse el directorio.
+
+```bash
+Options -Indexes
+```
+
+> No olvidar el signo - para indicar restricción.
+
+![Comprobar que funciona](./img/143_http.png)
+
+
+
+
+
+
+
+
+
+
+Para probarlo vamos a crear un nuevo directorio ``carpeta`` en nuestro primer sitio web ``misitio.com`` que contenga dos imágenes. Antes de crear el archivo ``.htaccess`` vamos a probar que desde el navegador del equipo Casa podemos ver en ``http://misitio.com/carpeta`` el listado de archivos de ese directorio.
 
 
 
