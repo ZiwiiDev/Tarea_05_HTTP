@@ -397,9 +397,9 @@ ping -c 3 www.misitio.com
 Y podemos ver la web con el navegador de línea de comandos con:
 
 ```bash
-links http://misitio.com
+links https://misitio.com
 y
-links http://www.misitio.com
+links https://www.misitio.com
 ```
 
 ![Comprobar que funciona](./img/36_http.png)
@@ -1030,7 +1030,7 @@ Creo el archivo "**index.html**" dentro de "**/var/www/misitio4.com**" y creo mi
 ![Creo el "index.html"](./img/109_http.png)
 
 Hacemos una copia de la plantilla ``/etc/apache2/sites-availables/default-ssl.conf`` y la configuramos. Creo el archivo de configuración del sitio web 4:
-s
+
 ```bash
 sudo cp /etc/apache2/sites-available/default-ssl.conf
 /etc/apache2/sites-available/misitio4.com.conf
@@ -1315,14 +1315,6 @@ ping -c 3 www.misitio.com
 
 ![Comprobar que funciona](./img/143_http.png)
 
-
-
-
-
-
-
-
-
 4. También podemos impedir, por ejemplo, que los ficheros de un directorio puedan ser listados por cualquier visitante. Basta con crear un fichero ``.htaccess`` y añadir la siguiente directiva que indica que no puede listarse el directorio.
 
 ```bash
@@ -1331,21 +1323,333 @@ Options -Indexes
 
 > No olvidar el signo - para indicar restricción.
 
-![Comprobar que funciona](./img/143_http.png)
+![Restringir que se pueda listar un fichero de un directorio por cualquier visitante](./img/144_http.png)
 
+Para probarlo vamos a crear un nuevo directorio ``carpeta`` en nuestro primer sitio web ``misitio.com`` que contenga dos imágenes.
 
+```bash
+cd ..
+sudo mkdir carpeta
+cd carpeta
+sudo touch imagen01.png
+sudo touch imagen02.png
+```
 
+![Crear "carpeta" y meter 2 imágenes](./img/145_http.png)
 
+![Crear "carpeta" y meter 2 imágenes](./img/146_http.png)
 
+Antes de crear el archivo ``.htaccess`` vamos a probar que desde el navegador del equipo **Casa** podemos ver en ``http://misitio.com/carpeta`` el listado de archivos de ese directorio.
 
+![Pruebo desde el navegador "Casa" el listado de archivos](./img/147_http.png)
 
+5. Añade a dicha carpeta el archivo ``.htaccess`` adecuado. Añado las restrincciones necesarias.
 
+```bash
+sudo touch .htaccess
+```
 
+![Creo el archivo "htaccess" y añado restrincciones](./img/148_http.png)
 
-Para probarlo vamos a crear un nuevo directorio ``carpeta`` en nuestro primer sitio web ``misitio.com`` que contenga dos imágenes. Antes de crear el archivo ``.htaccess`` vamos a probar que desde el navegador del equipo Casa podemos ver en ``http://misitio.com/carpeta`` el listado de archivos de ese directorio.
+6. Vuelve a probar que desde el navegador del equipo Casa ya no podemos ver el listado de archivos de ese directorio.
 
+![Pruebo si puedo ver el listado de archivos del directorio "carpeta"](./img/149_http.png)
 
+![Pruebo si puedo ver el listado de archivos del directorio "carpeta"](./img/150_http.png)
 
+## 10.- Monitorización (GoAccess)
 
+Información extraida de la web: https://despliegue.codeandcoke.com/apuntes:servidores_web
 
+**GoAccess** es una analizador visual de logs de Apache en tiempo real. De esa manera permite monitorizar el acceso y uso al servidor por parte de los usuarios en cada momento con numerosas métricas.
 
+1. Lo primero de todo es instalarlo en nuestro servidor:
+
+```bash
+sudo apt-get update
+sudo apt-get install goaccess
+```
+
+![Instalo "goaccess"](./img/151_http.png)
+
+2. Podemos usarla de dos maneras, visualizando los resultados en el terminal o en formato HTML como una web.
+
+Para visualizarlos en el terminal, basta localizar el fichero log de Apache que queremos monitorizar (en este caso el fichero general, pero podríamos pasar los ficheros log de los diferentes hosts virtuales que hayamos configurado) y ejecutamos la aplicación tal y como se muestra en el siguiente ejemplo:
+
+```bash
+sudo goaccess /var/log/apache2/misitio.com-access.log -c
+```
+
+![Visualizo en el terminal el fichero log de Apache](./img/152_http.png)
+
+Y tras elegir el formato de fichero log que usamos (pulsando espacio y después intro. NCSA
+Combined Log Format), podemos visualizar algo como la captura siguiente:
+
+![Visualizo en el terminal el fichero log de Apache](./img/153_http.png)
+
+3. También podemos pedirle a GoAccess que prepare un documento HTML en tiempo real donde
+podremos ver las estadísticas en tiempo real desde el navegador.
+
+```bash
+sudo goaccess /var/log/apache2/misitio.com-access.log \
+ -o /var/www/misitio.com/report.html \
+ --log-format=COMBINED \
+ --real-time-html
+```
+
+![Preparo un documento HTML en tiempo real donde visualizo las estadísticas del navegador a tiempo real](./img/154_http.png)
+
+![Preparo un documento HTML en tiempo real donde visualizo las estadísticas del navegador a tiempo real](./img/155_http.png)
+
+Accedemos al archivo html que le hemos indicado en la opción -o, en el ejemplo:
+``http://misitio.com/report.html``.
+
+Y este será el aspecto que tendrá, donde además podremos ir monitorizando el uso del servidor web puesto que se irá actualizando constatemente sin necesidad de recargar la página.
+
+![Preparo un documento HTML en tiempo real donde visualizo las estadísticas del navegador a tiempo real](./img/156_http.png)
+
+## 11.- Pruebas de carga
+
+ab: Apache HTTP server benchmarking tool
+
+https://httpd.apache.org/docs/current/programs/ab.html
+
+Ejemplo de un test con 1000 peticiones y una concurrencia de 10:
+
+```bash
+ab -n 1000 -c 10 http://misitio.com/index.html
+```
+
+![Pruebas de carga](./img/157_http.png)
+
+![Pruebas de carga](./img/158_http.png)
+
+Más información:
+
+![Pruebas de carga](./img/159_http.png)
+
+![Pruebas de carga](./img/160_http.png)
+
+## 12.- Optimización
+
+Se pueden usar muchas técnicas distintas, dependiendo de nuestras necesidades y de si nuestro sitio web lo permite. Estas directivas pueden ir en los ``archivos de configuración de los virtual hosts .conf`` o en archivos ``.htaccess``.
+
+1. Instala git y clona el siguiente repositorio:
+
+```bash
+sudo apt-get install git
+```
+
+Me sale así porque ya lo tengo instalado.
+
+![Git](./img/161_http.png)
+
+```bash
+cd /var/www
+sudo mkdir web_optimizacion_oliver.com
+cd /web_optimizacion_oliver.com
+
+sudo git clone https://github.com/jmoba/web_optimizacion.git
+```
+
+![Git](./img/162_http.png)
+
+```bash
+ls -la
+```
+
+![Git](./img/163_http.png)
+
+```bash
+cd web_optimizacion
+ls -la
+```
+
+![Git](./img/164_http.png)
+
+2. Crea un nuevo **virtual host** llamado ``optimizacion.com`` para dicha web.
+
+Hacemos una copia de la plantilla ``/etc/apache2/sites-availables/default-ssl.conf`` y la configuramos. Creo el archivo de configuración del sitio web 5:
+
+```bash
+sudo cp /etc/apache2/sites-available/misitio.com.conf
+/etc/apache2/sites-available/optimizacion.com.conf
+```
+
+> En el comando me ha faltado ponerle el ``.conf``, porque sino no deja activar el sitio web. Lo he cambiado con ``sudo mv optimizacion.com optimizacion.com.conf``.
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/165_http.png)
+
+Ahora configuro el archivo de configuración:
+
+```bash
+sudo nano optimizacion.com.conf
+```
+
+![Configuro el archivo de configuración del sitio web que he creado](./img/166_http.png)
+
+Activar el sitio y reiniciar apache.
+
+Le concedo los permisos y guardo el archivo creado.
+
+```bash
+sudo chown -R www-data:www-data /var/www/web_optimizacion_oliver.com/web_optimizacion
+```
+
+![Concedo permisos al archivo de configuración](./img/167_http.png)
+
+2. Cuando hayamos terminado el archivo de configuración del nuevo host virtual, podemos activarlo utilizando el comando ``a2ensite`` **(apache2 enable site)**:
+
+```bash
+sudo a2ensite optimizacion.com.conf
+```
+
+![Activar el archivo de configuración del nuevo host virtual](./img/168_http.png)
+
+Automáticamente se creará un enlace simbólico con la configuración del sitio web de ``sites-available`` en ``sites-enabled``:
+
+```bash
+cd ..
+ls sites-available
+ls sites-enabled
+```
+
+Resultado:
+
+![Se crea el enlace de la configuración del sitio web](./img/169_http.png)
+
+Reiniciamos el servicio ``apache2``. Lo he reiniciado anteriormente, pero lo volveré a hacer por si acaso es necesario.
+
+```bash
+sudo systemctl restart apache2
+sudo systemctl status apache2
+```
+
+![Reinicio el servicio "apache"](./img/170_http.png)
+
+Por simplicidad y para no tener que configurar un **Servidor DNS** para indicarle a nuestro ordenador que el dominio ``optimizacion.com`` apunta a la dirección IP de nuestro servidor. Editaremos el archivo ``/etc/hosts`` que hace las funciones de DNS local:
+
+> Recuerda añadir las nuevas direcciones al archivo hosts de los equipos en los que quieras comprobar el acceso al sitio web.
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/171_http.png)
+
+Si queremos probar desde el equipo **Casa** deberemos editar dicho archivo en ese equipo pero
+indicándo la dirección IP de **Servidor**:
+
+```bash
+sudo nano /etc/hosts
+```
+
+![Edito el archivo "/etc/hosts"](./img/172_http.png)
+
+Compruebo los archivos de configuración con ``apache2ctl configtest``.
+
+![Comprobar los archivos de configuración de "Apache"](./img/173_http.png)
+
+En ambos casos podemos comprobar que resuelve el nombre con:
+
+```bash
+ping -c 3 optimizacion.com
+y
+ping -c 3 www.optimizacion.com
+```
+
+![Comprobar que funciona](./img/174_http.png)
+
+7. Comprobar la conexión HTTPS desde **Servidor** con el navegador ``links`` y desde **Casa** con el navegador Firefox. Como el certificado es autofirmado el navagador nos deberá avisar de que la conexión no es segura ya que no puede comprobar nuestro certificado en una Autoridad
+Certificadora (CA). Para acceder debemos aceptar el certificado. En ``links`` solo debes contestar a la pregunta. En firefox pulsaremos sobre **Avanzado** y después **Aceptar el riesgo y continuar**.
+
+Y podemos ver la web con el navegador de línea de comandos con:
+
+```bash
+links http://optimizacion.com
+y
+links http://www.optimizacion.com
+```
+
+![Comprobar que funciona](./img/175_http.png)
+
+![Comprobar que funciona](./img/176_http.png)
+
+Compruebo que funciona la web:
+
+![Comprobar que funciona](./img/177_http.png)
+
+![Comprobar que funciona](./img/178_http.png)
+
+3. Realiza las siguientes optimizaciones mediante un archivo ``.htaccess`` en la carpeta principal del proyecto web. Recuerda instalar los módulos indicados previamente mediante el comando ``a2enmod``.
+
+```bash
+cd /var/www/web_optimizacion_oliver.com/web_optimizacion
+sudo touch .htaccess
+ls -la
+```
+
+![Creo el ".htaccess" en la carpeta principal de la web](./img/179_http.png)
+
+Instalo los módulos:
+
+```bash
+sudo a2enmod expires
+sudo a2enmod deflate
+sudo systemctl restart apache2
+sudo apache2ctl -M
+```
+
+![Instalo los módulos](./img/180_http.png)
+
+![Instalo los módulos](./img/181_http.png)
+
+Realiza las siguientes optimizaciones mediante un archivo ``.htaccess`` en la carpeta principal del proyecto web:
+
+4. A.- Especificar la caché del navegador (mod_expires):
+
+```bash
+sudo nano /.htaccess
+```
+
+![Configuro el ".htaccess"](./img/182_http.png)
+
+Muestra los archivos que has creado mediante ``cat`` y las estructura de archivos del sitio Web
+mediante ``tree``.
+
+```bash
+sudo cat /.htaccess
+tree
+```
+
+![Muestro los ficheros creados](./img/183_http.png)
+
+![Muestro la estructura de archivos](./img/184_http.png)
+
+Crea capturas con la herramienta de desarrolladores de tu navegador, sección Redes. Recuerda que en la primera captura debes borrar las cookies. Graba la conexión para tener los datos de tiempo. Deberas crear dos capturas una antes y otra después de cargar la caché en el navegador. Debe observarse que el tiempo es menor en la segunda captura.
+
+![Configuro el ".htaccess"](./img/185_http.png)
+
+![Configuro el ".htaccess"](./img/186_http.png)
+
+5. B.- Comprimir las comunicaciones (mod_deflate):
+
+```bash
+sudo nano /.htaccess
+```
+
+![Configuro el ".htaccess"](./img/187_http.png)
+
+Crea una tercera captura con la herramienta de desarrolladores de tu navegador, sección Redes.
+Graba la conexión para tener los datos de tiempo. Debe observarse que el tiempo es menor que en
+las anteriores capturas. Revisa las cookies si no funciona como se espera.
+
+![Configuro el ".htaccess"](./img/188_http.png)
+
+6. C.- OPCIONAL: Comprimir las comunicaciones (mod_gzip). Método más antiguo. Cambia las opciones del apartado B por estas.
+
+![Configuro el ".htaccess"](./img/189_http.png)
+
+![Configuro el ".htaccess"](./img/190_http.png)
+
+## Oliver Fabián Stetcu Stepanov | 2º DAW
